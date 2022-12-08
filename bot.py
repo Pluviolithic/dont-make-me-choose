@@ -5,6 +5,9 @@ from os.path import exists
 from dotenv import load_dotenv
 from util import changeSetting
 
+def pluralize(list):
+    return f"{'categories' if len(list) > 1 else 'category'} {', '.join(list)}"
+
 # load tokens and IDs for bot
 load_dotenv()
 discordToken = os.getenv("discord-token")
@@ -34,7 +37,11 @@ bot = interactions.Client(token=str(discordToken))
     ]
 )
 async def configure(ctx, name, value):
-    changeSetting(name, value)
-    await ctx.send(f"{name} set to {value} successfully!")
+    if name == "categories":
+        changeLists = changeSetting(name, value)
+        await ctx.send(f"Added {pluralize(changeLists[0])} and removed {pluralize(changeLists[1])}!")
+    else:
+        changeSetting(name, value)
+        await ctx.send(f"{name} set to {value} successfully!")
 
 bot.start()

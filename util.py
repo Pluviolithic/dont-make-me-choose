@@ -26,6 +26,7 @@ def getCoordinatesFromAddress(address):
 def getNearbyRestaurantsByGenre(genre):
     # if settings don't contain address, throw error? 
     with open("settings.json", "r") as settingsFile:
+        print(settingsFile)
         settings = json.load(settingsFile)
     if ("address" not in settings):
         raise Exception("User has not configured address in settings.")    
@@ -41,10 +42,32 @@ def getNearbyRestaurantsByGenre(genre):
     return [ result["poi"]["name"] for result in response.json()["results"] ]
 
 def changeSetting(setting, newValue):
-    with open("settings.json", "r") as settingsFile:
-        settings = json.load(settingsFile)
-    settings[setting] = newValue
-    with open("settings.json", "w") as settingsFile:
-        json.dump(settings, settingsFile)
+    if setting == "categories":
+        addList = []
+        removeList = []
+
+        with open("settings.json", "r") as settingsFile:
+            settings = json.load(settingsFile)
+
+        categories = settings["categories"]
+        for category in newValue.split():
+            category = category.lower()
+            if category in categories:
+                removeList.append(category)
+                categories.remove(category)
+            else:
+                addList.append(category)
+                categories.append(category)
+
+        with open("settings.json", "w") as settingsFile:
+            json.dump(settings, settingsFile)
+
+        return (addList, removeList)
+    else:
+        with open("settings.json", "r") as settingsFile:
+            settings = json.load(settingsFile)
+        settings[setting] = newValue
+        with open("settings.json", "w") as settingsFile:
+            json.dump(settings, settingsFile)
 
         

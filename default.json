@@ -1,3 +1,13 @@
 {
-  "address": "525 S Main St, Ada"
+  "address": "525 S Main St, Ada",
+  "categories": [
+    "mediterranean",
+    "american",
+    "mexican",
+    "italian",
+    "indian",
+    "japanese",
+    "chinese",
+    "thai"
+  ]
 }
