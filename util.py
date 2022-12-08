@@ -6,11 +6,15 @@ import re
 
 load_dotenv()
 
+#api to generate and read polls
 strawPollAPI = "https://api.strawpoll.com/v3/polls"
-coordinateQuery = "https://geocoding.geo.census.gov/geocoder/geographies/onelineaddress?"
-restaurantQuery = "https://api.tomtom.com/search/2/poiSearch/"
 
+#api to obtain coordinates from a provided address
+coordinateQuery = "https://geocoding.geo.census.gov/geocoder/geographies/onelineaddress?"
 coordinateMetadata = "&format=json&benchmark=2020&vintage=2010"
+
+#api similar to google places api but free
+restaurantQuery = "https://api.tomtom.com/search/2/poiSearch/"
 
 tomtomAPIToken = os.environ.get("api-token")
 
@@ -24,6 +28,8 @@ def writeJSONFile(fileName, newSettings):
         json.dump(newSettings, settingsFile)
 
 def convertAddressToSearchStr(address):
+    #replace all non-alphanumeric chunks in string with the + character
+    #to make the string safe for url
     safeSearchStr = re.sub(r"[\W_]+", "+", address)
     return coordinateQuery + "address=" + safeSearchStr + coordinateMetadata
 
@@ -34,9 +40,7 @@ def getCoordinatesFromAddress(address):
     return (relevantData["CENTLAT"], relevantData["CENTLON"])
 
 def getNearbyRestaurantsByGenre(genre):
-    # if settings don't contain address, throw error? 
     settings = readJSONFile("settings.json")
-
     radius = settings["radius"]
     coordinates = getCoordinatesFromAddress(settings["address"])
     metadata = genre + f".json?key={tomtomAPIToken}&radius={radius}&lat={coordinates[0]}&lon={coordinates[1]}"
@@ -46,12 +50,15 @@ def getNearbyRestaurantsByGenre(genre):
 
 def changeSetting(setting, newValue):
     if setting == "categories":
+        #create lists to show user what changes occured in the settings
         addList = []
         removeList = []
 
         settings = readJSONFile("settings.json")
         categories = settings["categories"]
 
+        #remove categories if they exist in settings
+        #and add them if they do not exist
         for category in newValue.split():
             category = category.lower()
             if category in categories:
@@ -70,6 +77,7 @@ def changeSetting(setting, newValue):
         writeJSONFile("settings.json", settings)
 
 def generatePoll(prompt, options, pollType="category"):
+    #removed duplication checking to allow for better testing
     data = {
         "title": prompt,
         "type": "multiple_choice",
@@ -92,6 +100,7 @@ def getPollResults(pollTag):
 
     pollResults = requests.get(strawPollAPI + "/" + sessionData[pollTag] + "/results").json()
 
+    #iterate over poll options and find the current one with the most votes
     pollWinner = ""
     highestVoteCount = -1
     for option in pollResults["poll_options"]:
