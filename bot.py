@@ -1,11 +1,12 @@
 import os
 import json
 import shutil
-import strawpoll
+import random
 import interactions
+
+from util import *
 from os.path import exists
 from dotenv import load_dotenv
-from util import changeSetting
 
 def pluralize(list):
     return f"{'categories' if len(list) > 1 else 'category'} {', '.join(list)}"
@@ -55,7 +56,9 @@ async def configure(ctx, name, value):
     scope=guildID,
 )
 async def categorypoll(ctx):
-    pass
+    settings = readJSONFile("settings.json")
+    pollUrl = generatePoll("Choose a category!", settings["categories"])
+    await ctx.send(pollUrl)
 
 @bot.command(
     name="restaurantpoll",
@@ -64,7 +67,7 @@ async def categorypoll(ctx):
     options=[
         interactions.Option(
             name="unrandomized",
-            description="Should results be based on previous poll? y/n",
+            description="Should results be based on most recent category poll? y/n",
             type=interactions.OptionType.STRING,
             required=False,
         ),
@@ -72,7 +75,21 @@ async def categorypoll(ctx):
 )
 async def restaurantpoll(ctx, unrandomized="n"):
     randomize = unrandomized.lower()[0] != "y"
-    pass
+    category = None
+
+    if randomize or "last-category-poll" not in readJSONFile("sessiondata.json"):
+        category = random.choice(readJSONFile("settings.json")["categories"])
+    else:
+        category = getPollResults("last-category-poll")
+
+    nearbyRestaurants = getNearbyRestaurantsByGenre(category)
+
+    if len(nearbyRestaurants) < 1:
+        await ctx.send(f"No {category} restaurants were found.")
+        return
+
+    pollUrl = generatePoll("Choose a restaurant!", nearbyRestaurants, "restaurant")
+    await ctx.send(pollUrl)
 
 @bot.command(
     name="showresults",
@@ -81,14 +98,20 @@ async def restaurantpoll(ctx, unrandomized="n"):
     options=[
         interactions.Option(
             name="polltype",
-            description="categorypoll or restarantpoll?",
+            description="category or restarant?",
             type=interactions.OptionType.STRING,
             required=False,
         ),
     ]
 )
 async def showresults(ctx, polltype):
-    pass
+    if polltype == "category":
+       result = getPollResults("last-category-poll") 
+    elif polltype == "restaurant":
+        result = getPollResults("last-restaurant-poll")
+    else:
+        result = "Invalid polltype provided."
+    await ctx.send(result)
 
 @bot.command(
     name="pickrestaurant",
