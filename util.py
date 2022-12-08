@@ -74,6 +74,7 @@ def generatePoll(prompt, options, pollType="category"):
         "title": prompt,
         "type": "multiple_choice",
         "poll_options": [ {"value": option} for option in options ],
+        "poll_config": {"duplication_checking": "none"}
     }
     newPollData = requests.post(strawPollAPI, json=data)
 

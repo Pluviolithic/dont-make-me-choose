@@ -104,7 +104,7 @@ async def restaurantpoll(ctx, unrandomized="n"):
         ),
     ]
 )
-async def showresults(ctx, polltype):
+async def showresults(ctx, polltype="category"):
     if polltype == "category":
        result = getPollResults("last-category-poll") 
     elif polltype == "restaurant":
@@ -120,13 +120,35 @@ async def showresults(ctx, polltype):
     options=[
         interactions.Option(
             name="category",
-            description="Optionally include category name or use last category poll result.",
+            description="Optionally include category name or use last category poll result else random.",
             type=interactions.OptionType.STRING,
             required=False,
         ),
     ]
 )
-async def pickrestaurant(ctx, category):
-    pass
+async def pickrestaurant(ctx, category=None):
+    settings = readJSONFile("settings.json")
+    sessionData = readJSONFile("sessiondata.json")
+
+    if type(category) == str:
+        restaurants = getNearbyRestaurantsByGenre(category)
+    elif "last-category-poll" in sessionData: 
+        restaurants = getNearbyRestaurantsByGenre(getPollResults("last-category-poll"))
+    else:
+        restaurants = getNearbyRestaurantsByGenre(random.choice(settings["categories"]))
+
+    if (len(restaurants) > 0):
+        await ctx.send(random.choice(restaurants))
+    else:
+        await ctx.send("Failed to generate a response in time.")
+
+@bot.command(
+    name="clearsession",
+    description="Clear session data/cookies.",
+    scope=guildID,
+)
+async def clearsession(ctx):
+    writeJSONFile("sessiondata.json", {})
+    await ctx.send("Successfully erased session data!")
 
 bot.start()
