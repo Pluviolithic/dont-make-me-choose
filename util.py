@@ -26,15 +26,9 @@ def getCoordinatesFromAddress(address):
 def getNearbyRestaurantsByGenre(genre):
     # if settings don't contain address, throw error? 
     with open("settings.json", "r") as settingsFile:
-        print(settingsFile)
         settings = json.load(settingsFile)
-    if ("address" not in settings):
-        raise Exception("User has not configured address in settings.")    
-    if ("radius" in settings):
-        radius = settings["radius"]
-    else:
-        radius = 1500
 
+    radius = settings["radius"]
     coordinates = getCoordinatesFromAddress(settings["address"])
     metadata = genre + f".json?key={tomtomAPIToken}&radius={radius}&lat={coordinates[0]}&lon={coordinates[1]}"
     response = requests.get(restaurantQuery + metadata)
