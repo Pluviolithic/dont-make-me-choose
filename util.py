@@ -35,18 +35,23 @@ def convertAddressToSearchStr(address):
 
 def getCoordinatesFromAddress(address):
     response = requests.get(convertAddressToSearchStr(address))
-    # maybe throw error indicating invalid addresses?
-    relevantData = response.json()["result"]["addressMatches"][0]["geographies"]["Census Blocks"][0]
-    return (relevantData["CENTLAT"], relevantData["CENTLON"])
+    try:
+        relevantData = response.json()["result"]["addressMatches"][0]["geographies"]["Census Blocks"][0]
+        return (relevantData["CENTLAT"], relevantData["CENTLON"])
+    except IndexError:
+        return False
 
 def getNearbyRestaurantsByGenre(genre):
     settings = readJSONFile("settings.json")
     radius = settings["radius"]
     coordinates = getCoordinatesFromAddress(settings["address"])
-    metadata = genre + f".json?key={tomtomAPIToken}&radius={radius}&lat={coordinates[0]}&lon={coordinates[1]}"
-    response = requests.get(restaurantQuery + metadata)
+    if coordinates:
+        metadata = genre + f".json?key={tomtomAPIToken}&radius={radius}&lat={coordinates[0]}&lon={coordinates[1]}"
+        response = requests.get(restaurantQuery + metadata)
 
-    return [ result["poi"]["name"] for result in response.json()["results"] ]
+        return [ result["poi"]["name"] for result in response.json()["results"] ]
+
+    return []
 
 def changeSetting(setting, newValue):
     if setting == "categories":

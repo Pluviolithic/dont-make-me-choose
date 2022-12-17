@@ -133,14 +133,16 @@ async def pickrestaurant(ctx, category=None):
     if type(category) == str:
         restaurants = getNearbyRestaurantsByGenre(category)
     elif "last-category-poll" in sessionData: 
-        restaurants = getNearbyRestaurantsByGenre(getPollResults("last-category-poll"))
+        category = getPollResults("last-category-poll")
+        restaurants = getNearbyRestaurantsByGenre(category)
     else:
-        restaurants = getNearbyRestaurantsByGenre(random.choice(settings["categories"]))
+        category = random.choice(settings["categories"])
+        restaurants = getNearbyRestaurantsByGenre(category)
 
     if (len(restaurants) > 0):
         await ctx.send(random.choice(restaurants))
     else:
-        await ctx.send("Failed to generate a response in time.")
+        await ctx.send(f"Invalid address configured by user or no {category} restaurants in area.")
 
 @bot.command(
     name="clearsession",
